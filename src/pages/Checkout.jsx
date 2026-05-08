@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, ShieldCheck, CheckCircle, ArrowLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useCart } from '../CartContext.jsx';
 import { useAuth } from '../AuthContext.jsx';
 import { api } from '../services/api.js';
@@ -12,7 +11,6 @@ export const Checkout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -82,7 +80,7 @@ export const Checkout = () => {
       const order = await api.createRazorpayOrder(total);
 
       const options = {
-        key: "rzp_test_SWZrKetZoAPoQQ", // IMPORTANT: User must replace this with a real Razorpay Test Key
+        key:'rzp_test_Sc7eKUUk76nqcQ', 
         amount: order.amount,
         currency: order.currency,
         name: "Nexus E-Commerce",
@@ -90,7 +88,10 @@ export const Checkout = () => {
         image: "https://picsum.photos/seed/nexus/200/200",
         order_id: order.id,
         handler: async function (response) {
-          console.log('Razorpay Success Response:', response);
+          console.log('=== RAZORPAY SUCCESS ===');
+          console.log('Response:', response);
+          console.log('isMounted:', isMounted.current);
+          
           // 2. Verify Payment on Backend
           try {
             const orderData = {
@@ -104,6 +105,7 @@ export const Checkout = () => {
               shippingAddress: `${formData.address}, ${formData.city}, ${formData.state}, ${formData.zip}`
             };
 
+            console.log('Sending verification request...');
             const verificationResult = await api.verifyRazorpayPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -111,8 +113,16 @@ export const Checkout = () => {
               orderData
             });
 
-            if (verificationResult.success) {
+            console.log('=== VERIFICATION RESULT ===');
+            console.log('Full Result:', verificationResult);
+            console.log('Success:', verificationResult?.success);
+            console.log('OrderId:', verificationResult?.orderId);
+
+            if (verificationResult?.success) {
+              console.log('✓ Payment verified successfully');
+              
               if (saveAddress) {
+                console.log('Updating profile...');
                 await api.updateProfile({
                   displayName: formData.name,
                   address: formData.address,
@@ -122,21 +132,41 @@ export const Checkout = () => {
                 });
               }
 
-              if (isMounted.current) {
-                setIsSuccess(true);
-                clearCart();
-                toast.success('Payment Successful!');
-              }
+              clearCart();
+              toast.success('Payment Successful! Redirecting...');
+              
+              console.log('isMounted check before navigate:', isMounted.current);
+              
+              const navigationState = {
+                id: verificationResult.orderId,
+                items: orderData.items,
+                total,
+                shippingAddress: orderData.shippingAddress,
+                name: formData.name,
+                email: formData.email,
+              };
+              
+              console.log('Navigation state:', navigationState);
+              console.log('About to navigate to /order-success');
+              
+              navigate('/order-success', { state: navigationState });
+              
+              console.log('Navigation called');
             } else {
-              toast.error('Payment verification failed');
+              console.error('✗ Verification failed');
+              console.log('Error message:', verificationResult?.message);
+              if (isMounted.current) {
+                toast.error('Payment verification failed: ' + (verificationResult?.message || 'Unknown error'));
+                setIsProcessing(false);
+              }
             }
           } catch (error) {
-            console.error('Error verifying payment:', error);
+            console.error('=== PAYMENT VERIFICATION ERROR ===');
+            console.error('Error:', error);
+            console.error('Error message:', error?.message);
+            console.error('Error response:', error?.response?.data);
             if (isMounted.current) {
-              toast.error('Failed to verify payment. Please contact support.');
-            }
-          } finally {
-            if (isMounted.current) {
+              toast.error('Failed to verify payment: ' + (error?.response?.data?.error || error?.message || 'Unknown error'));
               setIsProcessing(false);
             }
           }
@@ -175,33 +205,11 @@ export const Checkout = () => {
     }
   };
 
-  if (isSuccess) {
-    return (
-      <div className="max-w-md mx-auto text-center py-20">
-        <motion.div 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="bg-green-100 p-6 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center"
-        >
-          <CheckCircle className="w-12 h-12 text-green-600" />
-        </motion.div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Order Successful!</h1>
-        <p className="text-gray-600 mb-8">Thank you for your purchase. Your order has been placed and is being processed.</p>
-        <button 
-          onClick={() => navigate('/')}
-          className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
-        >
-          Back to Shop
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto">
       <button 
         onClick={() => navigate('/cart')}
-        className="flex items-center text-gray-600 hover:text-indigo-600 mb-8 transition-colors group"
+        className="flex items-center text-gray-600 hover:text-slate-600 mb-8 transition-colors group"
       >
         <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
         Back to cart
@@ -270,7 +278,7 @@ export const Checkout = () => {
                     checked={saveAddress}
                     onChange={() => setSaveAddress(!saveAddress)}
                   />
-                  <div className={`w-6 h-6 rounded-lg border-2 transition-all flex items-center justify-center ${saveAddress ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-200'}`}>
+                  <div className={`w-6 h-6 rounded-lg border-2 transition-all flex items-center justify-center ${saveAddress ? 'bg-slate-600 border-slate-600' : 'bg-white border-gray-200'}`}>
                     {saveAddress && <CheckCircle className="w-4 h-4 text-white" />}
                   </div>
                 </div>
@@ -280,8 +288,8 @@ export const Checkout = () => {
 
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-gray-900">Payment Method</h3>
-              <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center space-x-4">
-                <CreditCard className="w-8 h-8 text-indigo-600" />
+              <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg flex items-center space-x-4">
+                <CreditCard className="w-8 h-8 text-slate-600" />
                 <div>
                   <p className="font-bold text-gray-900">Razorpay Secure Payment</p>
                   <p className="text-xs text-gray-500">Pay securely via Cards, UPI, NetBanking</p>
@@ -296,55 +304,13 @@ export const Checkout = () => {
             <button
               type="submit"
               disabled={isProcessing || cart.length === 0}
-              className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50"
+              className="w-full bg-slate-600 text-white py-4 rounded-lg font-bold flex items-center justify-center hover:bg-slate-700 transition-all shadow-lg shadow-slate-200 disabled:opacity-50"
             >
               {isProcessing ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
                 `Pay ₹${total.toFixed(2)}`
               )}
-            </button>
-
-            {/* Simulation Fallback for Testing */}
-            <button
-              type="button"
-              onClick={async () => {
-                setIsProcessing(true);
-                await new Promise(r => setTimeout(r, 1500));
-                try {
-                  await api.createOrder({
-                    items: cart.map(item => ({
-                      productId: item.id,
-                      name: item.name,
-                      price: item.price,
-                      quantity: item.quantity
-                    })),
-                    total,
-                    shippingAddress: `${formData.address}, ${formData.city}, ${formData.state}, ${formData.zip}`
-                  });
-
-                  if (saveAddress) {
-                    await api.updateProfile({
-                      displayName: formData.name,
-                      address: formData.address,
-                      city: formData.city,
-                      state: formData.state,
-                      zip: formData.zip
-                    });
-                  }
-
-                  setIsSuccess(true);
-                  clearCart();
-                  toast.success('Simulated Payment Successful!');
-                } catch (e) {
-                  toast.error('Failed to create order');
-                } finally {
-                  setIsProcessing(false);
-                }
-              }}
-              className="w-full mt-2 text-indigo-600 text-sm font-medium hover:underline"
-            >
-              Simulate Successful Payment (Demo Mode)
             </button>
           </form>
         </div>
@@ -361,7 +327,7 @@ export const Checkout = () => {
           </div>
           <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
             <span className="text-lg font-bold text-gray-900">Total</span>
-            <span className="text-2xl font-bold text-indigo-600">₹{total.toFixed(2)}</span>
+            <span className="text-2xl font-bold text-slate-600">₹{total.toFixed(2)}</span>
           </div>
         </div>
       </div>

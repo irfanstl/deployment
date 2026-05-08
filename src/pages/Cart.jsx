@@ -1,27 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../CartContext.jsx';
 import { motion } from 'framer-motion';
+import { api } from '../services/api.js';
+import { toast } from 'react-hot-toast';
 
 export const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, total } = useCart();
+  const { cart, addToCart, removeFromCart, updateQuantity, total } = useCart();
   const navigate = useNavigate();
+
 
   if (cart.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
-        <div className="bg-indigo-50 p-6 rounded-full mb-6">
-          <ShoppingBag className="w-12 h-12 text-indigo-600" />
+      <div className="flex flex-col max-w-2xl mx-auto space-y-8">
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-gray-100 shadow-sm">
+        <div className="bg-slate-50 p-6 rounded-full mb-6">
+          <ShoppingBag className="w-12 h-12 text-slate-600" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
         <p className="text-gray-500 mb-8">Looks like you haven't added anything yet.</p>
         <Link 
           to="/" 
-          className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+          className="bg-slate-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
         >
           Start Shopping
         </Link>
+      </div>
       </div>
     );
   }
@@ -36,7 +41,7 @@ export const Cart = () => {
             layout
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center space-x-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
+            className="flex items-center space-x-6 bg-white p-6 rounded-lg border border-gray-100 shadow-sm"
           >
             <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-gray-50">
               <img src={item.image} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -77,7 +82,7 @@ export const Cart = () => {
       </div>
 
       <div className="lg:col-span-1">
-        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm sticky top-24">
+        <div className="bg-white p-8 rounded-lg border border-gray-100 shadow-sm sticky top-24">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
           <div className="space-y-4 mb-8">
             <div className="flex justify-between text-gray-600">
@@ -90,12 +95,12 @@ export const Cart = () => {
             </div>
             <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
               <span className="text-lg font-bold text-gray-900">Total</span>
-              <span className="text-2xl font-bold text-indigo-600">₹{total.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-slate-600">₹{total.toFixed(2)}</span>
             </div>
           </div>
           <button 
             onClick={() => navigate('/checkout')}
-            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+            className="w-full bg-slate-600 text-white py-4 rounded-lg font-bold flex items-center justify-center hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
           >
             Checkout <ArrowRight className="ml-2 w-5 h-5" />
           </button>

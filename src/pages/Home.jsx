@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, ShoppingBag, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShoppingBag, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '../services/api.js';
 import { useCart } from '../CartContext.jsx';
@@ -7,16 +7,28 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 export const Home = () => {
-  const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [groupedCategories, setGroupedCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
+  const scrollContainerRefs = useRef({});
+
+  const handleScroll = (category, direction) => {
+    const container = scrollContainerRefs.current[category];
+    if (container) {
+      const scrollAmount = 1000;
+      container.scrollBy({
+        left: direction === 'next' ? scrollAmount : -scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await api.getProducts();
-        setProducts(data);
+        // Uses server-side aggregation — zero client-side grouping needed
+        const data = await api.getHomepageProducts();
+        setGroupedCategories(data);
       } catch (error) {
         console.error('Error fetching products:', error);
         toast.error('Failed to load products');
@@ -28,15 +40,10 @@ export const Home = () => {
     fetchProducts();
   }, []);
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-600"></div>
       </div>
     );
   }
@@ -44,8 +51,8 @@ export const Home = () => {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <section className="relative h-[400px] rounded-3xl overflow-hidden bg-indigo-900 flex items-center px-8 sm:px-16">
-        <div className="absolute inset-0 opacity-40">
+      <section className="relative h-[320px] sm:h-[420px] rounded-lg overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900 flex items-center px-4 sm:px-8 lg:px-16">
+        <div className="absolute inset-0 opacity-30">
           <img 
             src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80" 
             alt="Hero Background" 
@@ -53,19 +60,19 @@ export const Home = () => {
             referrerPolicy="no-referrer"
           />
         </div>
-        <div className="relative z-10 max-w-2xl text-white">
+        <div className="relative z-10 max-w-full sm:max-w-2xl text-white">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl font-bold mb-6 tracking-tight leading-tight"
+            className="text-4xl sm:text-5xl font-bold mb-5 tracking-tight leading-tight"
           >
-            Elevate Your Style with <span className="text-indigo-400">Nexus</span>
+            Elevate Your Style with <span className="text-slate-300">Nexus</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-gray-200 mb-8"
+            className="text-lg text-slate-200 mb-8"
           >
             Discover a curated collection of premium products designed for the modern lifestyle.
           </motion.p>
@@ -73,7 +80,7 @@ export const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white text-indigo-900 px-8 py-3 rounded-full font-bold flex items-center hover:bg-gray-100 transition-all"
+            className="bg-white text-slate-700 px-8 py-3 rounded-lg font-bold flex items-center justify-center w-full sm:w-auto hover:bg-slate-100 transition-all"
           >
             Shop Now <ArrowRight className="ml-2 w-5 h-5" />
           </motion.button>
@@ -81,67 +88,70 @@ export const Home = () => {
       </section>
 
       {/* Search & Filter */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="text-3xl font-bold text-gray-900">Featured Products</h2>
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all shadow-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+      <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Featured Products</h2>
 
-      {/* Product Grid */}
-      {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => (
-            <motion.div
-              key={product.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300"
-            >
-              <Link to={`/product/${product.id}`} className="block relative aspect-square overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-indigo-600 shadow-sm">
-                  {product.category}
-                </div>
-              </Link>
-              <div className="p-6">
-                <Link to={`/product/${product.id}`}>
-                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors mb-2 truncate">
-                    {product.name}
-                  </h3>
-                </Link>
-                <div className="flex items-center justify-between mt-4">
-                  <span className="text-2xl font-bold text-gray-900">₹{product.price}</span>
-                  <button
-                    onClick={() => {
-                      addToCart(product);
-                      toast.success('Added to cart!');
-                    }}
-                    className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                  </button>
+      {/* Products by Category */}
+      {groupedCategories.length > 0 ? (
+        <div className="space-y-10">
+          {groupedCategories.map(({ category, products }) => (
+            <div key={category} className="space-y-4">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800">{category}</h3>
+              <div 
+                ref={el => {
+                  if (el) scrollContainerRefs.current[category] = el;
+                }}
+                className="overflow-x-auto scrollbar-hide"
+              >
+                <div className="flex gap-4 sm:gap-6 pb-4 min-w-min">
+                  {products.map((product) => (
+                    <motion.div
+                      key={product.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="group bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex-shrink-0 w-48 sm:w-56 flex flex-col"
+                    >
+                      <Link to={`/product/${product.id}`} className="block relative aspect-square overflow-hidden flex-shrink-0">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 rounded text-[10px] sm:text-xs font-bold text-slate-600 shadow-sm">
+                          {product.category}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            addToCart(product);
+                            toast.success('Added to cart!');
+                          }}
+                          className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 bg-slate-600 hover:bg-slate-700 text-white p-2 sm:p-2.5 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl scale-0 group-hover:scale-100"
+                        >
+                          <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </button>
+                      </Link>
+                      <div className="p-2 sm:p-3 flex-grow flex flex-col">
+                        <Link to={`/product/${product.id}`}>
+                          <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-slate-700 transition-colors mb-1 truncate">
+                            {product.name}
+                          </h3>
+                        </Link>
+                        <div className="flex justify-between items-end mt-auto">
+                          <span className="text-xs sm:text-sm font-bold text-slate-900">₹{product.price}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-          <p className="text-gray-500 text-lg">No products found matching your search.</p>
+        <div className="text-center py-20 bg-white rounded-lg border border-dashed border-slate-200">
+          <p className="text-slate-500 text-lg">No products found.</p>
         </div>
       )}
     </div>

@@ -4,11 +4,26 @@
 @theme {
   --font-sans: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
+  --color-primary: #4b5563;
+  --color-primary-hover: #3a4452;
+  --color-secondary: #64748b;
+  --color-accent: #0ea5e9;
+  --color-success: #06b6d4;
 }
 
 @layer base {
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
+  }
+  
+  /* Primary button style */
+  .btn-primary {
+    @apply bg-slate-600 text-white hover:bg-slate-700 transition-colors shadow-sm;
+  }
+  
+  /* Secondary button style */
+  .btn-secondary {
+    @apply bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors;
   }
 }
 
@@ -16,3 +31,170 @@
   @apply bg-white/80 backdrop-blur-md border border-white/20;
 }
 
+/* Hide scrollbar but keep scrolling enabled */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Navigation button styles */
+.nav-button {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.nav-button-container:hover .nav-button,
+.nav-button-container.group:hover .nav-button {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Mobile-First Media Queries */
+@media (max-width: 640px) {
+  /* Navbar adjustments */
+  nav {
+    height: auto;
+    padding: 0.75rem 0;
+  }
+
+  /* Hero section spacing */
+  section:first-of-type {
+    margin-bottom: 2rem;
+  }
+
+  /* Product grid spacing */
+  .grid {
+    gap: 1rem;
+  }
+
+  /* Footer column layout */
+  footer > div > div {
+    gap: 2rem;
+  }
+
+  /* Button text sizing */
+  button {
+    font-size: 0.875rem;
+  }
+
+  /* Form inputs */
+  input, textarea, select {
+    font-size: 1rem; /* Prevents zoom on iOS */
+    padding: 0.625rem 1rem;
+  }
+
+  /* Reduce shadow on mobile for better performance */
+  .shadow-lg, .shadow-xl {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Reduce border radius globally */
+  .rounded-3xl {
+    border-radius: 0.5rem;
+  }
+
+  .rounded-2xl {
+    border-radius: 0.5rem;
+  }
+
+  .rounded-xl {
+    border-radius: 0.375rem;
+  }
+
+  .rounded-lg {
+    border-radius: 0.25rem;
+  }
+}
+
+/* Tablet and below adjustments */
+@media (max-width: 768px) {
+  /* Main container padding */
+  main {
+    padding-top: 1.5rem;
+  }
+
+  /* Section spacing */
+  section {
+    margin-bottom: 2rem;
+  }
+
+  /* Hero section text size */
+  h1 {
+    line-height: 1.2;
+  }
+
+  /* Increase touch target size for mobile */
+  button, a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Small mobile phones (320px - 375px) */
+@media (max-width: 375px) {
+  /* Reduce text sizes further on very small screens */
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+
+  /* Tighter padding */
+  .px-4 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Smaller gaps */
+  .gap-4 {
+    gap: 0.75rem;
+  }
+
+  /* Reduce card padding */
+  .p-6 {
+    padding: 1rem;
+  }
+
+  /* Smaller border radius on small screens */
+  .rounded-2xl {
+    border-radius: 0.75rem;
+  }
+
+  .rounded-3xl {
+    border-radius: 1rem;
+  }
+}
+
+/* Standard mobile (375px - 480px) */
+@media (min-width: 375px) and (max-width: 480px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.625rem;
+  }
+}
+
+/* Large mobile and small tablets (481px - 640px) */
+@media (min-width: 480px) {
+  .grid {
+    gap: 1.25rem;
+  }
+
+  input, textarea {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+}

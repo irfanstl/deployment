@@ -40,7 +40,18 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => setCart([]);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce((sum, item) => {
+    let effectivePrice = item.price;
+    if (item.tierPricing && item.tierPricing.length > 0) {
+      const applicableTiers = item.tierPricing.filter(t => item.quantity >= t.minQuantity);
+      if (applicableTiers.length > 0) {
+        applicableTiers.sort((a, b) => b.minQuantity - a.minQuantity);
+        const bestTier = applicableTiers[0];
+        effectivePrice = effectivePrice * (1 - bestTier.discountPercentage / 100);
+      }
+    }
+    return sum + effectivePrice * item.quantity;
+  }, 0);
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, total }}>

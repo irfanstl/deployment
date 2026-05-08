@@ -75,16 +75,16 @@ export const Profile = () => {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm"
+        className="bg-white rounded-lg p-8 border border-gray-100 shadow-sm"
       >
         <div className="flex items-center space-x-6 mb-8">
-          <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold border-4 border-white shadow-lg">
+          <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-3xl font-bold border-4 border-white shadow-lg">
             {user.displayName[0]}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{user.displayName}</h1>
             <p className="text-gray-500">{user.email}</p>
-            <span className="inline-block mt-2 px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full uppercase tracking-wider">
+            <span className="inline-block mt-2 px-3 py-1 bg-slate-50 text-slate-600 text-xs font-bold rounded-lg uppercase tracking-wider">
               {user.role}
             </span>
           </div>
@@ -98,7 +98,7 @@ export const Profile = () => {
             </h2>
             <button 
               onClick={() => setIsEditingAddress(!isEditingAddress)}
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+              className="text-sm font-medium text-slate-600 hover:text-slate-700"
             >
               {isEditingAddress ? 'Cancel' : 'Edit Address'}
             </button>
@@ -149,14 +149,14 @@ export const Profile = () => {
               <div className="md:col-span-2 pt-2">
                 <button 
                   type="submit"
-                  className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg"
+                  className="w-full bg-slate-600 text-white py-3 rounded-lg font-bold hover:bg-slate-700 transition-all shadow-lg"
                 >
                   Save Address
                 </button>
               </div>
             </form>
           ) : (
-            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
               {profile?.address ? (
                 <div className="space-y-1">
                   <p className="text-gray-900 font-medium">{profile.address}</p>
@@ -172,12 +172,12 @@ export const Profile = () => {
 
       <div className="space-y-6">
         <h2 className="text-xl font-bold flex items-center">
-          <Package className="w-6 h-6 mr-2 text-indigo-600" />
+          <Package className="w-6 h-6 mr-2 text-slate-600" />
           Order History
         </h2>
 
         {orders.length === 0 ? (
-          <div className="bg-white p-12 rounded-3xl border border-gray-100 text-center">
+          <div className="bg-white p-12 rounded-lg border border-gray-100 text-center">
             <Package className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-500">You haven't placed any orders yet.</p>
           </div>
@@ -188,7 +188,7 @@ export const Profile = () => {
                 key={order.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="p-6">
                   <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
@@ -202,7 +202,7 @@ export const Profile = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase font-bold mb-1">Total</p>
-                      <p className="text-sm font-bold text-indigo-600">₹{order.total.toFixed(2)}</p>
+                      <p className="text-sm font-bold text-slate-600">₹{order.total.toFixed(2)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 uppercase font-bold mb-1">Status</p>
@@ -231,7 +231,7 @@ export const Profile = () => {
                   </div>
 
                   {order.deliveryTime && (
-                    <div className="mt-6 pt-6 border-t border-gray-50 flex items-center text-sm text-indigo-600 bg-indigo-50/50 p-4 rounded-xl">
+                    <div className="mt-6 pt-6 border-t border-gray-50 flex items-center text-sm text-slate-600 bg-slate-50/50 p-4 rounded-lg">
                       <Clock className="w-4 h-4 mr-2" />
                       <span className="font-medium">Expected Delivery: {order.deliveryTime}</span>
                     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster, toast } from 'react-hot-toast';
 import { AuthProvider } from './AuthContext.jsx';
@@ -13,6 +13,8 @@ import { Checkout } from './pages/Checkout.jsx';
 import { Cart } from './pages/Cart.jsx';
 import { Login } from './pages/Login.jsx';
 import { Profile } from './pages/Profile.jsx';
+import { OrderSuccess } from './pages/OrderSuccess.jsx';
+import { SearchResults } from './pages/SearchResults.jsx';
 import { io } from 'socket.io-client';
 
 const RealTimeNotifications = () => {
@@ -35,6 +37,8 @@ const RealTimeNotifications = () => {
 };
 
 export default function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -42,14 +46,16 @@ export default function App() {
           <Router>
             <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
               <RealTimeNotifications />
-              <Navbar />
-              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <Navbar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+              <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Routes>
                   <Route path="/" element={<Home />} />
+                  <Route path="/search" element={<SearchResults />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/product/:id" element={<ProductDetails />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/order-success" element={<OrderSuccess />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/admin" element={<Admin />} />
                 </Routes>

@@ -1,70 +1,105 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from './services/api.js';
+import { auth } from './firebase.js';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
+} from 'firebase/auth';
 
 const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('nexus_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (credentials) => {
+  useEffect(() => {
+    let unsubscribe = () => {};
+    try {
+      if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+        throw new Error("No Firebase API Key");
+      }
+      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          try {
+            const token = await firebaseUser.getIdToken();
+            api.setToken(token);
+            // Get our DB user profile using the firebase token
+            const profile = await api.getProfile();
+            setUser(profile);
+            localStorage.setItem('nexus_user', JSON.stringify(profile));
+          } catch (err) {
+            console.error("Failed to sync firebase user with backend", err);
+            setUser(null);
+            localStorage.removeItem('nexus_user');
+          }
+        } else {
+          setUser(null);
+          api.clearToken();
+          localStorage.removeItem('nexus_user');
+        }
+        setLoading(false);
+      });
+    } catch (err) {
+      console.warn("Firebase Auth bypassed due to missing config.");
+      setLoading(false);
+    }
+
+    return () => unsubscribe();
+  }, []);
+
+  const login = async ({ email, password }) => {
     setLoading(true);
     try {
-      const { token, user } = await api.login(credentials);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
       api.setToken(token);
-      setUser(user);
-      localStorage.setItem('nexus_user', JSON.stringify(user));
+      // Wait for the sync in onAuthStateChanged or force it
+      const profile = await api.getProfile();
+      setUser(profile);
+      return profile;
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (userData) => {
+  const register = async ({ email, password, displayName }) => {
     setLoading(true);
     try {
-      const { token, user } = await api.register(userData);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
       api.setToken(token);
-      setUser(user);
-      localStorage.setItem('nexus_user', JSON.stringify(user));
+      
+      // Register in backend MySQL DB
+      const profile = await api.completeSignup({ email, displayName, uid: userCredential.user.uid });
+      setUser(profile.user);
+      return profile;
     } finally {
       setLoading(false);
     }
   };
 
-  const requestOtp = async (data) => {
+  const loginWithGoogle = async () => {
     setLoading(true);
     try {
-      return await api.requestOtp(data);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyOtp = async (email, otp) => {
-    setLoading(true);
-    try {
-      return await api.verifyOtp(email, otp);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const completeSignup = async (data) => {
-    setLoading(true);
-    try {
-      const { token, user } = await api.completeSignup(data);
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const token = await userCredential.user.getIdToken();
       api.setToken(token);
-      setUser(user);
-      localStorage.setItem('nexus_user', JSON.stringify(user));
+      
+      const profile = await api.getProfile();
+      setUser(profile);
+      return profile;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth);
     api.clearToken();
     setUser(null);
     localStorage.removeItem('nexus_user');
@@ -73,8 +108,8 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, login, register, logout, requestOtp, verifyOtp, completeSignup }}>
-      {children}
+    <AuthContext.Provider value={{ user, loading, isAdmin, login, register, loginWithGoogle, logout }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
