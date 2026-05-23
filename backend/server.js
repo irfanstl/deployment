@@ -10,7 +10,10 @@ import jwt from 'jsonwebtoken';
 import { connectDB } from './db.js';
 import admin from 'firebase-admin';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Initialize Firebase Admin (Using SERVICE_ACCOUNT from .env or mock for dev)
 if (!admin.apps.length) {
@@ -21,12 +24,14 @@ if (!admin.apps.length) {
         serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
       }
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET
       });
       console.log('Firebase Admin initialized with SERVICE_ACCOUNT');
     } else {
       admin.initializeApp({
-        credential: admin.credential.applicationDefault()
+        credential: admin.credential.applicationDefault(),
+        storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET
       });
       console.log('Firebase Admin initialized with applicationDefault');
     }
@@ -41,8 +46,7 @@ import productRoutes from './routes/products.js';
 import apiRoutes from './routes.js';
 import { Log, sequelize, User } from './models.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 async function startServer() {
   const app = express();

@@ -2,7 +2,7 @@ import express from 'express';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
-import { Order } from './models.js';
+import { Order, Product, sequelize } from './models.js';
 import { sendOrderConfirmation } from './utils.js';
 
 dotenv.config();
@@ -67,14 +67,30 @@ router.post('/verify', async (req, res) => {
     .digest("hex");
 
   if (razorpay_signature === expectedSign) {
+    // Start TCL Transaction
+    const t = await sequelize.transaction();
+    
     try {
+      // 1. Deduct stock for each item (trigger will validate this)
+      for (const item of orderData.items) {
+        const product = await Product.findByPk(item.productId, { transaction: t });
+        if (!product) {
+          throw new Error(`Product ${item.name} not found`);
+        }
+        await product.decrement('stock', { by: item.quantity, transaction: t });
+      }
+
+      // 2. Create Order
       const order = await Order.create({
         ...orderData,
         userId: req.user.id,
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,
         status: 'paid'
-      });
+      }, { transaction: t });
+
+      // Execute TCL COMMIT
+      await t.commit();
 
       // Broadcast to all users using io attached to app
       const io = req.app.get('io');
@@ -92,7 +108,10 @@ router.post('/verify', async (req, res) => {
 
       res.json({ success: true, orderId: order.id });
     } catch (err) {
-      res.status(500).json({ error: 'Failed to save order' });
+      // Execute TCL ROLLBACK on error
+      await t.rollback();
+      console.error('Transaction failed:', err);
+      res.status(500).json({ error: 'Failed to save order or insufficient stock', details: err.message });
     }
   } else {
     res.status(400).json({ error: 'Invalid signature' });

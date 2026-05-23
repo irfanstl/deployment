@@ -1,6 +1,7 @@
 import express from 'express';
-import { User, Order, Log, RFQ } from './models.js';
+import { User, Order, Log, RFQ, Product } from './models.js';
 import { sendShippingUpdate, sendOrderConfirmation } from './utils.js';
+import { upload, uploadFileToCloud } from './firebaseStorage.js';
 
 const router = express.Router();
 
@@ -151,6 +152,73 @@ router.get('/admin/logs', isAdmin, async (req, res) => {
     res.json(logs);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch logs' });
+  }
+});
+
+// Admin Product Routes
+router.post('/admin/products', isAdmin, upload.single('media'), async (req, res) => {
+  try {
+    const { name, price, category, stock, description, image } = req.body;
+    let imageUrl = image || '';
+
+    // If a media file was uploaded, send it to Firebase Storage
+    if (req.file) {
+      imageUrl = await uploadFileToCloud(req.file);
+    }
+
+    const product = await Product.create({
+      name,
+      price: parseFloat(price),
+      category,
+      stock: parseInt(stock, 10) || 0,
+      description,
+      image: imageUrl, 
+    });
+
+    res.status(201).json({ success: true, product });
+  } catch (err) {
+    console.error('Failed to create product:', err);
+    res.status(500).json({ error: 'Failed to create product' });
+  }
+});
+
+router.put('/admin/products/:id', isAdmin, upload.single('media'), async (req, res) => {
+  try {
+    const { name, price, category, stock, description, image } = req.body;
+    const product = await Product.findByPk(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    let imageUrl = image !== undefined ? image : product.image;
+    if (req.file) {
+      imageUrl = await uploadFileToCloud(req.file);
+    }
+
+    await product.update({
+      name,
+      price: parseFloat(price),
+      category,
+      stock: parseInt(stock, 10) || 0,
+      description,
+      image: imageUrl,
+    });
+
+    res.json(product);
+  } catch (err) {
+    console.error('Failed to update product:', err);
+    res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+router.delete('/admin/products/:id', isAdmin, async (req, res) => {
+  try {
+    const product = await Product.findByPk(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    
+    await product.destroy();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to delete product:', err);
+    res.status(500).json({ error: 'Failed to delete product' });
   }
 });
 

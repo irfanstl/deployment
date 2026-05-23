@@ -54,7 +54,7 @@ export const Home = () => {
       <section className="relative h-[320px] sm:h-[420px] rounded-lg overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900 flex items-center px-4 sm:px-8 lg:px-16">
         <div className="absolute inset-0 opacity-30">
           <img 
-            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80" 
+            src="/home_banner.jpg" 
             alt="Hero Background" 
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"

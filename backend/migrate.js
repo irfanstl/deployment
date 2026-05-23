@@ -117,7 +117,8 @@ async function migrate() {
       password: process.env.MYSQL_PASSWORD || ''
     });
     const dbName = process.env.MYSQL_DATABASE || 'nexus_ecom';
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
+    await connection.query(`DROP DATABASE IF EXISTS \`${dbName}\`;`);
+    await connection.query(`CREATE DATABASE \`${dbName}\`;`);
     await connection.end();
 
     console.log('Connecting to MySQL with Sequelize...');

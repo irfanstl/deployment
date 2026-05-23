@@ -11,6 +11,24 @@ export const connectDB = async () => {
     await sequelize.sync({ alter: true });
     console.log('Database synced.');
 
+    // Create trigger to prevent negative stock (satisfies trigger requirement)
+    try {
+      await sequelize.query('DROP TRIGGER IF EXISTS prevent_negative_stock;');
+      await sequelize.query(`
+        CREATE TRIGGER prevent_negative_stock
+        BEFORE UPDATE ON Products
+        FOR EACH ROW
+        BEGIN
+          IF NEW.stock < 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient stock for this product';
+          END IF;
+        END;
+      `);
+      console.log('Database trigger created.');
+    } catch (triggerErr) {
+      console.warn('Could not create trigger (might already exist or permission issue):', triggerErr.message);
+    }
+
     // Seed Admin User
     const adminEmail = 'admin@nexus.com';
     const existingAdmin = await User.findOne({ where: { email: adminEmail } });

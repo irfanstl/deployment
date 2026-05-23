@@ -1,6 +1,12 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const sequelize = new Sequelize(
   process.env.MYSQL_DATABASE || 'nexus_ecom', 
@@ -35,7 +41,7 @@ export const Product = sequelize.define('Product', {
   price: { type: DataTypes.FLOAT },
   category: { type: DataTypes.STRING },
   image: { type: DataTypes.TEXT },
-  stock: { type: DataTypes.INTEGER },
+  stock: { type: DataTypes.INTEGER, defaultValue: 0 },
   sku: { type: DataTypes.STRING },
   tierPricing: { type: DataTypes.JSON },
   isRfqOnly: { type: DataTypes.BOOLEAN, defaultValue: false },

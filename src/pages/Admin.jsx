@@ -23,7 +23,8 @@ export const Admin = () => {
     price: 0,
     category: '',
     image: '',
-    stock: 0
+    stock: 0,
+    mediaFile: null
   });
 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
@@ -71,18 +72,31 @@ export const Admin = () => {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
+      let payload = newProduct;
+      
+      // If a file was selected, we MUST send FormData
+      if (newProduct.mediaFile) {
+        payload = new FormData();
+        payload.append('name', newProduct.name);
+        payload.append('description', newProduct.description);
+        payload.append('price', newProduct.price);
+        payload.append('category', newProduct.category);
+        payload.append('stock', newProduct.stock);
+        payload.append('media', newProduct.mediaFile);
+      }
+
       if (editingProduct) {
-        const updated = await api.updateProduct(editingProduct.id, newProduct);
+        const updated = await api.updateProduct(editingProduct.id, payload);
         setProducts(products.map(p => p.id === editingProduct.id ? updated : p));
         toast.success('Product updated successfully');
         setEditingProduct(null);
       } else {
-        const added = await api.addProduct(newProduct);
+        const added = await api.addProduct(payload);
         setProducts([added, ...products]);
         toast.success('Product added successfully');
       }
       setIsAdding(false);
-      setNewProduct({ name: '', description: '', price: 0, category: '', image: '', stock: 0 });
+      setNewProduct({ name: '', description: '', price: 0, category: '', image: '', stock: 0, mediaFile: null });
     } catch (error) {
       console.error('Error saving product:', error);
       toast.error('Failed to save product');
@@ -162,7 +176,7 @@ export const Admin = () => {
             if (isAdding) {
               setIsAdding(false);
               setEditingProduct(null);
-              setNewProduct({ name: '', description: '', price: 0, category: '', image: '', stock: 0 });
+              setNewProduct({ name: '', description: '', price: 0, category: '', image: '', stock: 0, mediaFile: null });
             } else {
               setIsAdding(true);
             }
@@ -216,18 +230,37 @@ export const Admin = () => {
                   onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value)})}
                 />
               </div>
-            </div>
-            <div className="space-y-4">
               <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-slate-600 transition-all">
-                <ImageIcon className="ml-4 text-slate-400 w-5 h-5 flex-shrink-0" />
+                <Package className="ml-4 text-slate-400 w-5 h-5 flex-shrink-0" />
                 <input
                   required
-                  type="url"
-                  placeholder="Image URL"
+                  type="number"
+                  placeholder="Stock"
                   className="flex-1 px-3 py-3 bg-transparent outline-none text-slate-900 placeholder-slate-400"
-                  value={newProduct.image}
-                  onChange={e => setNewProduct({...newProduct, image: e.target.value})}
+                  value={newProduct.stock}
+                  onChange={e => setNewProduct({...newProduct, stock: parseInt(e.target.value, 10) || 0})}
                 />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex flex-col space-y-2 bg-slate-50 border border-slate-200 rounded-lg p-3 focus-within:ring-2 focus-within:ring-slate-600 transition-all">
+                <label className="text-xs font-bold text-slate-500 uppercase flex items-center">
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  Media (Image/Video)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                  onChange={e => {
+                    if (e.target.files && e.target.files[0]) {
+                      setNewProduct({...newProduct, mediaFile: e.target.files[0]});
+                    }
+                  }}
+                />
+                {newProduct.image && !newProduct.mediaFile && (
+                  <p className="text-xs text-slate-400 truncate">Current: {newProduct.image}</p>
+                )}
               </div>
               <textarea
                 required
@@ -282,6 +315,7 @@ export const Admin = () => {
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Product</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Category</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Price</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Stock</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -296,6 +330,7 @@ export const Admin = () => {
                     </td>
                     <td className="px-6 py-4 text-slate-600">{product.category}</td>
                     <td className="px-6 py-4 font-bold text-slate-900">₹{product.price}</td>
+                    <td className="px-6 py-4 font-bold text-slate-900">{product.stock !== undefined ? product.stock : 0}</td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
                         <button 

@@ -7,8 +7,9 @@ export const api = {
 
   async request(endpoint, options = {}) {
     const token = this.getToken();
+    const isFormData = options.body instanceof FormData;
     const headers = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options.headers,
     };
@@ -47,9 +48,9 @@ export const api = {
   getProductBySku: (sku) => api.request(`/products/sku/${encodeURIComponent(sku)}`),
   getProductReviews: (id) => api.request(`/products/${id}/reviews`),
   addProductReview: (id, review) => api.request(`/products/${id}/reviews`, { method: 'POST', body: JSON.stringify(review) }),
-  addProduct: (product) => api.request('/products', { method: 'POST', body: JSON.stringify(product) }),
-  updateProduct: (id, product) => api.request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(product) }),
-  deleteProduct: (id) => api.request(`/products/${id}`, { method: 'DELETE' }),
+  addProduct: (product) => api.request('/admin/products', { method: 'POST', body: product instanceof FormData ? product : JSON.stringify(product) }),
+  updateProduct: (id, product) => api.request(`/admin/products/${id}`, { method: 'PUT', body: product instanceof FormData ? product : JSON.stringify(product) }),
+  deleteProduct: (id) => api.request(`/admin/products/${id}`, { method: 'DELETE' }),
 
   // Orders
   getOrders: () => api.request('/orders'),
