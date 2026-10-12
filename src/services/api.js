@@ -33,6 +33,9 @@ export const api = {
     return data;
   },
 
+  // Test
+  hello: () => api.request('/hello'),
+
   // Auth
   login: (credentials) => api.request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (user) => api.request('/auth/register', { method: 'POST', body: JSON.stringify(user) }),
