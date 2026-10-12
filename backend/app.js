@@ -66,9 +66,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Middleware to check DB connection (skips /api/health and /api/hello)
+// Middleware to check DB connection for protected/write endpoints
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api/health') || req.path.startsWith('/api/hello')) return next();
+  if (
+    req.path.startsWith('/api/health') ||
+    req.path.startsWith('/api/hello') ||
+    req.path.startsWith('/api/products')
+  ) {
+    return next();
+  }
   try {
     await sequelize.authenticate();
     next();
@@ -87,14 +93,18 @@ app.use((req, res, next) => {
     res.send = originalSend;
     const response = res.send(body);
 
-    const ip = req.ip || req.connection.remoteAddress;
-    const userAgent = req.headers['user-agent'];
-    const userId = req.user?.id || null;
-    const suspicious = res.statusCode >= 400 && (req.body?.email?.includes("'") || req.path.includes('admin'));
+    try {
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      const userId = req.user?.id || null;
+      const suspicious = res.statusCode >= 400 && (req.body?.email?.includes("'") || req.path?.includes('admin'));
 
-    Log.create({
-      userId, ip, method: req.method, path: req.path, status: res.statusCode, userAgent, suspicious
-    }).catch(err => console.error('Logging error:', err));
+      Log.create({
+        userId, ip, method: req.method, path: req.path, status: res.statusCode, userAgent, suspicious
+      }).catch(() => {});
+    } catch (_) {
+      // Never crash response on logging failures
+    }
 
     return response;
   };

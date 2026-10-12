@@ -16,6 +16,15 @@ const sequelize = new Sequelize(
     host: process.env.MYSQL_HOST || 'localhost',
     dialect: 'mysql',
     logging: false,
+    dialectOptions: {
+      connectTimeout: 2500,
+    },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 3000,
+      idle: 10000,
+    },
   }
 );
 
