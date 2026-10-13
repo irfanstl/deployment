@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import multer from 'multer';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 export const upload = multer({ storage: multer.memoryStorage() });
 
@@ -8,7 +8,7 @@ export const uploadFileToCloud = async (fileObject) => {
   try {
     const bucket = admin.storage().bucket();
     const extension = fileObject.originalname.split('.').pop();
-    const filename = `uploads/${uuidv4()}.${extension}`;
+    const filename = `uploads/${crypto.randomUUID()}.${extension}`;
     const file = bucket.file(filename);
 
     await file.save(fileObject.buffer, {

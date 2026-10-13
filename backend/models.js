@@ -1,4 +1,5 @@
 import { Sequelize, DataTypes } from 'sequelize';
+import mysql2 from 'mysql2';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,6 +16,7 @@ const sequelize = new Sequelize(
   {
     host: process.env.MYSQL_HOST || 'localhost',
     dialect: 'mysql',
+    dialectModule: mysql2,
     logging: false,
     dialectOptions: {
       connectTimeout: 2500,

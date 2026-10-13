@@ -69,9 +69,9 @@ app.get('/api/health', (req, res) => {
 // Middleware to check DB connection for protected/write endpoints
 app.use(async (req, res, next) => {
   if (
-    req.path.startsWith('/api/health') ||
-    req.path.startsWith('/api/hello') ||
-    req.path.startsWith('/api/products')
+    req.path.includes('health') ||
+    req.path.includes('hello') ||
+    req.path.includes('products')
   ) {
     return next();
   }
